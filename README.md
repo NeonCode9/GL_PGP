@@ -28,22 +28,22 @@ The platform is engineered as a fully automated loop spanning multiple cloud eco
 ## 📁 Repository Directory Structure
 
 .
-├── .github/
-│   └── workflows/
-│       └── pipeline.yml       # Automated CI/CD GitHub Actions engine
-└── tourism_project/
-├── data/
-│   ├── tourism.csv        # Raw base dataset
-│   ├── train.csv          # Preprocessed stratified training partition
-│   └── test.csv           # Preprocessed stratified validation partition
-├── model_building/
-│   ├── data_prep.py       # Data cleaning and ingestion module
-│   ├── train.py           # Model execution pipeline and tracking script
-│   └── best_model.pkl     # Locally saved model binary weights
-└── deployment/
-├── app.py             # Streamlit interactive application script
-├── Dockerfile         # System container configuration layout
-└── requirements.txt   # Locked application version dependencies
+├── .github/ </br>
+│   └── workflows/</br>
+│       └── pipeline.yml       # Automated CI/CD GitHub Actions engine</br>
+└── tourism_project/</br>
+├── data/</br>
+│   ├── tourism.csv        # Raw base dataset</br>
+│   ├── train.csv          # Preprocessed stratified training partition</br>
+│   └── test.csv           # Preprocessed stratified validation partition</br>
+├── model_building/</br>
+│   ├── data_prep.py       # Data cleaning and ingestion module</br>
+│   ├── train.py           # Model execution pipeline and tracking script</br>
+│   └── best_model.pkl     # Locally saved model binary weights</br>
+└── deployment/</br>
+├── app.py             # Streamlit interactive application script</br>
+├── Dockerfile         # System container configuration layout</br>
+└── requirements.txt   # Locked application version dependencies</br>
 
 ---
 
