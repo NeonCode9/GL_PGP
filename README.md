@@ -18,7 +18,7 @@ This project establishes a scalable, automated predictive gatekeeper platform. B
 The platform is engineered as a fully automated loop spanning multiple cloud ecosystems:
 
 * **Google Colab:** Staging area for initial scripting and workspace tree structure creation.
-* **GitHub Repository:** The primary codebase orchestrator containing project assets.
+* **GitHub Repository:** Primary codebase context hosted under `NeonCode9/GL_PGP`.
 * **GitHub Actions Workflow:** Spins up an automated runner to process splits, retrain models, and sync platforms.
 * **Hugging Face Hub:** Host for the remote data spaces and serialization artifact hub.
 * **Hugging Face Spaces:** Serves the interactive Streamlit user app via secure Docker containers[cite: 1, 2].
