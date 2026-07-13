@@ -13,9 +13,17 @@ from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
 from huggingface_hub import HfApi
 
 def train_and_register_model():
-    print("🚀 Extracting dataset partitions for optimization model...")
-    train_df = pd.read_csv("tourism_project/data/train.csv")
-    test_df = pd.read_csv("tourism_project/data/test.csv")
+    print("🚀 Ingesting partitions for model building...")
+    train_path = "tourism_project/data/train.csv"
+    test_path = "tourism_project/data/test.csv"
+    
+    # Cloud fallback ingestion points if training context triggers independently
+    if not os.path.exists(train_path):
+        train_df = pd.read_csv("https://huggingface.co/spaces/sudhakaryg/demo_project/resolve/main/train.csv")
+        test_df = pd.read_csv("https://huggingface.co/spaces/sudhakaryg/demo_project/resolve/main/test.csv")
+    else:
+        train_df = pd.read_csv(train_path)
+        test_df = pd.read_csv(test_path)
     
     X_train = train_df.drop(columns=['ProdTaken'])
     y_train = train_df['ProdTaken']
@@ -67,16 +75,15 @@ def train_and_register_model():
         joblib.dump(pipeline, local_model_path)
         mlflow.log_artifact(local_model_path)
         
-        # Deploy model weights directly to your active Hugging Face Model Space
+        # Save weights directly to your active space repo placeholder
         hf_token = os.getenv("HF_TOKEN")
-        hf_user = "sudhakaryg" # Updated destination
+        hf_user = "sudhakaryg"
         
         if hf_token:
             api = HfApi()
-            model_repo = f"{hf_user}/tourism-package-model"
-            api.create_repo(repo_id=model_repo, token=hf_token, repo_type="model", exist_ok=True)
-            api.upload_file(path_or_fileobj=local_model_path, path_in_repo="best_model.pkl", repo_id=model_repo, repo_type="model", token=hf_token)
-            print("✔️ Finalized model binary registered on Hugging Face Model Hub.")
+            repo_target = f"{hf_user}/demo_project"
+            api.upload_file(path_or_fileobj=local_model_path, path_in_repo="best_model.pkl", repo_id=repo_target, repo_type="space", token=hf_token)
+            print("✔️ Finalized model binary registered inside your Hugging Face Space repository.")
 
 if __name__ == '__main__':
     train_and_register_model()
