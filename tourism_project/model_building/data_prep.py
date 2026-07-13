@@ -3,20 +3,12 @@ import os
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
+from huggingface_hub import HfApi
 
 def run_data_preparation():
-    print("🚀 Ingesting raw data stream from verified cloud asset path...")
-    
-    # Cloud fallback architecture to pull dataset asset dynamically
-    raw_url = "https://raw.githubusercontent.com/NeonCode9/GL_PGP/main/tourism_project/data/tourism.csv"
-    backup_url = "https://raw.githubusercontent.com/Ankit1012/Tourism-Package-Prediction/main/Tourism.csv"
-    
-    try:
-        df = pd.read_csv(raw_url)
-    except Exception:
-        df = pd.read_csv(backup_url)
-            
-    print(f"Ingested dataset structural shape: {df.shape}")
+    print("🚀 Ingesting raw data stream...")
+    raw_path = "tourism_project/data/tourism.csv"
+    df = pd.read_csv(raw_path)
     
     # 1. Drop structural indices and non-predictive metadata identifiers
     if 'Unnamed: 0' in df.columns:
@@ -37,13 +29,11 @@ def run_data_preparation():
     # 3. Handle Missing Values via Outlier-Resistant Imputation Logic
     numerical_features = ['Age', 'DurationOfPitch', 'NumberOfTrips', 'NumberOfChildrenVisiting', 'NumberOfFollowups', 'MonthlyIncome']
     for col in numerical_features:
-        if col in df.columns:
-            df[col].fillna(df[col].median(), inplace=True)
+        df[col].fillna(df[col].median(), inplace=True)
         
     categorical_features = ['TypeofContact', 'PreferredPropertyStar']
     for col in categorical_features:
-        if col in df.columns:
-            df[col].fillna(df[col].mode()[0], inplace=True)
+        df[col].fillna(df[col].mode()[0], inplace=True)
     print("Imputation sequence finalized. Missing values dropped to 0.")
     
     # 4. Stratified Split (80/20) to maintain minority target class distribution (ProdTaken)
@@ -57,12 +47,24 @@ def run_data_preparation():
     train_df = pd.concat([X_train, y_train], axis=1)
     test_df = pd.concat([X_test, y_test], axis=1)
     
-    os.makedirs("tourism_project/data", exist_ok=True)
     train_path = "tourism_project/data/train.csv"
     test_path = "tourism_project/data/test.csv"
     train_df.to_csv(train_path, index=False)
     test_df.to_csv(test_path, index=False)
-    print("✔️ Partitions saved successfully to local runner workspace.")
+    print("Partitions saved successfully to disk.")
+    
+    # 5. Connect and push to updated Hugging Face Dataset space repository
+    hf_token = os.getenv("HF_TOKEN")
+    hf_user = "sudhakaryg" # Updated targeted user profile context
+    
+    if hf_token:
+        api = HfApi()
+        repo_target = f"{hf_user}/tourism-package-dataset"
+        print(f"Uploading partitions to Dataset Hub destination: {repo_target}...")
+        api.create_repo(repo_id=repo_target, token=hf_token, repo_type="dataset", exist_ok=True)
+        api.upload_file(path_or_fileobj=train_path, path_in_repo="train.csv", repo_id=repo_target, repo_type="dataset", token=hf_token)
+        api.upload_file(path_or_fileobj=test_path, path_in_repo="test.csv", repo_id=repo_target, repo_type="dataset", token=hf_token)
+        print("✔️ Data spaces updated and synchronized successfully.")
 
 if __name__ == '__main__':
     run_data_preparation()

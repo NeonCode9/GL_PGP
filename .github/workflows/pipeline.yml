@@ -53,11 +53,10 @@ jobs:
           cp tourism_project/data/test.csv destination_space/test.csv
           cp tourism_project/model_building/best_model.pkl destination_space/best_model.pkl
           
-          cd destination_space
-          
-          # Write out absolute configuration metadata frontmatter header block to fix space jumbling
-          cat << 'EOF' > README.md
----
+          # Use an automated Python script to write out the README header metadata
+          # This guarantees that formatting symbols or hidden tabs are never stripped out by the bash runner
+          python -c "
+metadata = '''---
 title: Wellness Tourism Package Predictor
 emoji: ✈️
 colorFrom: blue
@@ -69,13 +68,18 @@ pinned: false
 
 # ✈️ AI-Driven Tourism Package Prediction & MLOps Pipeline
 
-An end-to-end production-grade machine learning and MLOps lifecycle solution engineered for **\"Visit with Us\"** to optimize marketing campaigns.
+An end-to-end production-grade machine learning and MLOps lifecycle solution engineered for \"Visit with Us\" to optimize marketing campaigns.
 
 ## 📊 Live System Endpoints
 * **Production Application Dashboard:** https://huggingface.co/spaces/sudhakaryg/demo_project
 * **GitHub Repository Code Context:** https://github.com/NeonCode9/GL_PGP
-EOF
+'''
+with open('destination_space/README.md', 'w', encoding='utf-8') as f:
+    f.write(metadata)
+print('✔️ Space metadata header compiled safely.')
+"
           
+          cd destination_space
           git add .
-          git commit -m "Production Update: Overwrite app, assets, and configs. Run: ${{ github.run_number }}" || echo "No pipeline variances detected."
+          git commit -m "Production Update: Overwrite app, assets, and metadata header. Run: ${{ github.run_number }}" || echo "No pipeline variances detected."
           git push https://sudhakaryg:${{ secrets.HF_TOKEN }}@huggingface.co/spaces/sudhakaryg/demo_project main

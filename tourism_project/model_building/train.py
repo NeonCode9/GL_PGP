@@ -10,14 +10,12 @@ from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.pipeline import Pipeline
 from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
+from huggingface_hub import HfApi
 
 def train_and_register_model():
-    print("🚀 Ingesting partitions for model building...")
-    train_path = "tourism_project/data/train.csv"
-    test_path = "tourism_project/data/test.csv"
-    
-    train_df = pd.read_csv(train_path)
-    test_df = pd.read_csv(test_path)
+    print("🚀 Extracting dataset partitions for optimization model...")
+    train_df = pd.read_csv("tourism_project/data/train.csv")
+    test_df = pd.read_csv("tourism_project/data/test.csv")
     
     X_train = train_df.drop(columns=['ProdTaken'])
     y_train = train_df['ProdTaken']
@@ -68,7 +66,17 @@ def train_and_register_model():
         local_model_path = "tourism_project/model_building/best_model.pkl"
         joblib.dump(pipeline, local_model_path)
         mlflow.log_artifact(local_model_path)
-        print("✔️ Model binary pipeline saved locally to runner environment workspace.")
+        
+        # Deploy model weights directly to your active Hugging Face Model Space
+        hf_token = os.getenv("HF_TOKEN")
+        hf_user = "sudhakaryg" # Updated destination
+        
+        if hf_token:
+            api = HfApi()
+            model_repo = f"{hf_user}/tourism-package-model"
+            api.create_repo(repo_id=model_repo, token=hf_token, repo_type="model", exist_ok=True)
+            api.upload_file(path_or_fileobj=local_model_path, path_in_repo="best_model.pkl", repo_id=model_repo, repo_type="model", token=hf_token)
+            print("✔️ Finalized model binary registered on Hugging Face Model Hub.")
 
 if __name__ == '__main__':
     train_and_register_model()
