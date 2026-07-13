@@ -3,7 +3,7 @@ name: Tourism Project Automation Pipeline
 on:
   push:
     branches:
-      - main  # Automatically triggers on every push to your main branch
+      - main  # Automatically execute on updates to the main code branch
 
 jobs:
   mlops-automated-lifecycle:
@@ -18,44 +18,43 @@ jobs:
           python-version: '3.9'
           cache: 'pip'
 
-      - name: Install Architecture System Requirements
+      - name: Install System Architecture Requirements
         run: |
           pip install --upgrade pip
           pip install -r tourism_project/deployment/requirements.txt
 
-      - name: Execute Automated Preprocessing Layer
+      - name: Run Automated Preprocessing Layers
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-          HF_USER: ${{ secrets.HF_USER }}
+          HF_USER: "sudhakaryg"
         run: |
           python tourism_project/model_building/data_prep.py
 
-      - name: Execute Model Ingestion & MLflow Tracking
+      - name: Run Model Ingestion & MLflow Tracking
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-          HF_USER: ${{ secrets.HF_USER }}
+          HF_USER: "sudhakaryg"
         run: |
           nohup mlflow ui --host 0.0.0.0 --port 5000 &
           sleep 5
           python tourism_project/model_building/train.py
 
-      - name: Sync App Elements with Production Hugging Face Space
+      - name: Sync and Overwrite Active Hugging Face Placeholder Space
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-          HF_USER: ${{ secrets.HF_USER }}
         run: |
           git config --global user.email "actions@github.com"
-          git config --global user.name "GitHub Actions Automation"
+          git config --global user.name "GitHub Actions CI/CD Engine"
           
-          # Clones your dedicated Streamlit App space on Hugging Face
-          git clone https://huggingface.co/spaces/${{ secrets.HF_USER }}/tourism-predictor-app production_app
+          # Target your active placeholder Space location on Hugging Face
+          git clone https://huggingface.co/spaces/sudhakaryg/demo_project destination_space
           
-          # Sync code updates from your GitHub workspace straight to the Hugging Face production repository
-          cp tourism_project/deployment/app.py production_app/app.py
-          cp tourism_project/deployment/requirements.txt production_app/requirements.txt
-          cp tourism_project/deployment/Dockerfile production_app/Dockerfile
+          # Copy application components over to refresh the repository context
+          cp tourism_project/deployment/app.py destination_space/app.py
+          cp tourism_project/deployment/requirements.txt destination_space/requirements.txt
+          cp tourism_project/deployment/Dockerfile destination_space/Dockerfile
           
-          cd production_app
+          cd destination_space
           git add .
-          git commit -m "Automated CI/CD build deployment number: ${{ github.run_number }}" || echo "No new variations found to sync."
-          git push https://${{ secrets.HF_USER }}:${{ secrets.HF_TOKEN }}@huggingface.co/spaces/${{ secrets.HF_USER }}/tourism-predictor-app main
+          git commit -m "Production MLOps Deployment Update - Action Run ID: ${{ github.run_number }}" || echo "No pipeline variances detected."
+          git push https://sudhakaryg:${{ secrets.HF_TOKEN }}@huggingface.co/spaces/sudhakaryg/demo_project main

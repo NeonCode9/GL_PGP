@@ -4,28 +4,31 @@ import joblib
 import os
 import urllib.request
 
-st.set_page_config(page_title="Visit with Us: Premium Package AI Analytics", layout="wide")
-st.title("Wellness Tourism Package Purchase Predictor")
+st.set_page_config(page_title="Visit with Us: Premium Package AI Analytics", layout="wide", page_icon="✈️")
+st.title("✈️ Wellness Tourism Package Purchase Predictor")
 
-# Pull model weights directly from the Hugging Face Model Hub
 @st.cache_resource
 def load_production_model():
-    # Looks for your user name dynamically in the system variables
-    hf_user = os.getenv("HF_USER", "sudhakaryg")
+    # Set to parse your specific profile location metrics
+    hf_user = "sudhakaryg"
     url = f"https://huggingface.co/{hf_user}/tourism-package-model/resolve/main/best_model.pkl"
     local_path = "best_model.pkl"
     if not os.path.exists(local_path):
-        urllib.request.urlretrieve(url, local_path)
+        try:
+            urllib.request.urlretrieve(url, local_path)
+        except Exception as e:
+            st.error(f"Error fetching model weights from remote repository: {e}")
+            return None
     return joblib.load(local_path)
 
 model = load_production_model()
 
 if model is not None:
-    st.success("Production model successfully synchronized with Hugging Face Hub.")
+    st.success("⚡ Production machine learning pipeline synchronized with Hugging Face Model Space.")
     
-    # Structure user interface inputs across 3 visual columns
     col1, col2, col3 = st.columns(3)
     with col1:
+        st.info("**Profile Demographics**")
         age = st.number_input("Customer Age", min_value=18, max_value=100, value=35)
         gender = st.selectbox("Gender", ["Male", "Female"])
         marital_status = st.selectbox("Marital Status", ["Single", "Married", "Divorced", "Unmarried"])
@@ -33,22 +36,23 @@ if model is not None:
         designation = st.selectbox("Designation", ["Executive", "Manager", "Senior Manager", "AVP", "VP"])
         monthly_income = st.number_input("Gross Monthly Income (INR)", min_value=0, value=25000)
     with col2:
-        city_tier = st.selectbox("City Tier Tier", [1, 2, 3])
-        num_person = st.number_input("Total Traveling Companions", min_value=1, max_value=15, value=2)
+        st.info("**Logistics & Companions**")
+        city_tier = st.selectbox("City Tier Classification", [1, 2, 3])
+        num_person = st.number_input("Total Companions Traveling", min_value=1, max_value=15, value=2)
         children = st.number_input("Accompanying Children (< Age 5)", min_value=0, max_value=10, value=0)
-        num_trips = st.number_input("Average Annual Trips", min_value=0, max_value=25, value=2)
+        num_trips = st.number_input("Average Annual Trips Target", min_value=0, max_value=25, value=2)
         passport = st.selectbox("Valid Passport Holder?", [1, 0], format_func=lambda x: "Yes" if x==1 else "No")
         own_car = st.selectbox("Owns Personal Vehicle?", [1, 0], format_func=lambda x: "Yes" if x==1 else "No")
     with col3:
+        st.info("**Sales Outreach Telemetry**")
         type_of_contact = st.selectbox("Lead Sourcing Stream", ["Company Invited", "Self Inquiry", "Unknown"])
-        product_pitched = st.selectbox("Product Tier Pitched", ["Basic", "Standard", "Deluxe", "Super Deluxe", "King"])
-        duration_pitch = st.number_input("Sales Presentation Duration (Mins)", min_value=0, max_value=180, value=15)
-        followups = st.number_input("Post-pitch Follow-ups", min_value=0, max_value=20, value=3)
-        property_star = st.slider("Preferred Hotel Rating (Stars)", 3, 5, 3)
-        pitch_satisfaction = st.slider("Sales Pitch Satisfaction Score", 1, 5, 3)
+        product_pitched = st.selectbox("Product Tier Originally Pitched", ["Basic", "Standard", "Deluxe", "Super Deluxe", "King"])
+        duration_pitch = st.number_input("Sales Pitch Duration (Minutes)", min_value=0, max_value=180, value=15)
+        followups = st.number_input("Total Campaign Follow-ups", min_value=0, max_value=20, value=3)
+        property_star = st.slider("Preferred Hotel Rating Selection", 3, 5, 3)
+        pitch_satisfaction = st.slider("Outreach Pitch Satisfaction Score", 1, 5, 3)
 
-    if st.button("Score Customer Conversion Probability"):
-        # Pack inputs into a structured data frame for the pipeline model
+    if st.button("🔮 Score Target Purchase Probability"):
         payload = pd.DataFrame([{
             'Age': float(age), 'TypeofContact': type_of_contact, 'CityTier': int(city_tier),
             'Occupation': occupation, 'Gender': gender, 'NumberOfPersonVisiting': float(num_person),
@@ -65,6 +69,8 @@ if model is not None:
         
         st.markdown("---")
         if prediction == 1:
-            st.success(f"**High Potential Buyer! Conversion Probability: {probability*100:.2f}%**")
+            st.success(f"🎯 **High Conversion Likelihood! Target Probability: {probability*100:.2f}%**")
         else:
-            st.warning(f"**Low Priority Lead. Purchase Probability: {probability*100:.2f}%**")
+            st.warning(f"💤 **Low Conversion Candidate. Target Probability: {probability*100:.2f}%**")
+else:
+    st.error("❌ Application Error: System could not retrieve production model weights from Hub.")
