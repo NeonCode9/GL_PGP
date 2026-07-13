@@ -55,28 +55,6 @@ jobs:
           cp tourism_project/deployment/Dockerfile destination_space/Dockerfile
           
           cd destination_space
-          
-          # Programmatically construct Hugging Face metadata frontmatter header
-          cat << 'EOF' > README.md
----
-title: Wellness Tourism Package Predictor
-emoji: ✈️
-colorFrom: blue
-colorTo: green
-sdk: docker
-app_port: 7860
-pinned: false
----
-
-# ✈️ AI-Driven Tourism Package Prediction & MLOps Pipeline
-
-An end-to-end production-grade machine learning and MLOps lifecycle solution engineered for **"Visit with Us"** to optimize marketing campaigns.
-
-## 📊 Live System Endpoints
-* **Production Application Dashboard:** https://huggingface.co/spaces/sudhakaryg/demo_project
-* **GitHub Repository Code Context:** https://github.com/NeonCode9/GL_PGP
-EOF
-          
           git add .
-          git commit -m "Production MLOps Deployment Update - Add HuggingFace Metadata Header Run ID: ${{ github.run_number }}" || echo "No pipeline variances detected."
+          git commit -m "Production MLOps Deployment Update - Action Run ID: ${{ github.run_number }}" || echo "No pipeline variances detected."
           git push https://sudhakaryg:${{ secrets.HF_TOKEN }}@huggingface.co/spaces/sudhakaryg/demo_project main
