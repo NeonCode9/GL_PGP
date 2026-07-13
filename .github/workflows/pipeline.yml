@@ -53,7 +53,7 @@ jobs:
           cp tourism_project/data/test.csv destination_space/test.csv
           cp tourism_project/model_building/best_model.pkl destination_space/best_model.pkl
           
-          # Use safe echo commands to explicitly write the required metadata headers
+          # Use clean, simple echo statements to explicitly write out the required metadata headers
           echo "---" > destination_space/README.md
           echo "title: Wellness Tourism Package Predictor" >> destination_space/README.md
           echo "emoji: ✈️" >> destination_space/README.md
@@ -69,9 +69,6 @@ jobs:
           echo "### 📊 Live System Endpoints" >> destination_space/README.md
           echo "* **Dashboard App:** https://huggingface.co/spaces/sudhakaryg/demo_project" >> destination_space/README.md
           echo "* **Code Repository:** https://github.com/NeonCode9/GL_PGP" >> destination_space/README.md
-          
-          # FIXED: Swapped out the python print line for a native bash echo statement
-          echo "✔️ Space metadata configuration header compiled safely."
           
           cd destination_space
           git add .
