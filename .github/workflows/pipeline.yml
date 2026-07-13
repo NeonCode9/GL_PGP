@@ -24,37 +24,58 @@ jobs:
           pip install -r tourism_project/deployment/requirements.txt
 
       - name: Run Automated Preprocessing Layers
-        env:
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
-          HF_USER: "sudhakaryg"
         run: |
           python tourism_project/model_building/data_prep.py
 
       - name: Run Model Ingestion & MLflow Tracking
-        env:
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
-          HF_USER: "sudhakaryg"
         run: |
           nohup mlflow ui --host 0.0.0.0 --port 5000 &
           sleep 5
           python tourism_project/model_building/train.py
 
-      - name: Sync and Overwrite Active Hugging Face Placeholder Space
+      - name: Sync Data, Weights, and App Components to Hugging Face Space Repository
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
           git config --global user.email "actions@github.com"
           git config --global user.name "GitHub Actions CI/CD Engine"
           
-          # Target your active placeholder Space location on Hugging Face
+          # Clone target placeholder Space location on Hugging Face
           git clone https://huggingface.co/spaces/sudhakaryg/demo_project destination_space
           
-          # Copy application components over to refresh the repository context
+          # Copy application frontend components
           cp tourism_project/deployment/app.py destination_space/app.py
           cp tourism_project/deployment/requirements.txt destination_space/requirements.txt
           cp tourism_project/deployment/Dockerfile destination_space/Dockerfile
           
+          # Copy data files and training weights
+          cp tourism_project/data/train.csv destination_space/train.csv
+          cp tourism_project/data/test.csv destination_space/test.csv
+          cp tourism_project/model_building/best_model.pkl destination_space/best_model.pkl
+          
           cd destination_space
+          
+          # Write out absolute configuration metadata frontmatter header block to fix space jumbling
+          cat << 'EOF' > README.md
+---
+title: Wellness Tourism Package Predictor
+emoji: ✈️
+colorFrom: blue
+colorTo: green
+sdk: docker
+app_port: 7860
+pinned: false
+---
+
+# ✈️ AI-Driven Tourism Package Prediction & MLOps Pipeline
+
+An end-to-end production-grade machine learning and MLOps lifecycle solution engineered for **\"Visit with Us\"** to optimize marketing campaigns.
+
+## 📊 Live System Endpoints
+* **Production Application Dashboard:** https://huggingface.co/spaces/sudhakaryg/demo_project
+* **GitHub Repository Code Context:** https://github.com/NeonCode9/GL_PGP
+EOF
+          
           git add .
-          git commit -m "Production MLOps Deployment Update - Action Run ID: ${{ github.run_number }}" || echo "No pipeline variances detected."
+          git commit -m "Production Update: Overwrite app, assets, and configs. Run: ${{ github.run_number }}" || echo "No pipeline variances detected."
           git push https://sudhakaryg:${{ secrets.HF_TOKEN }}@huggingface.co/spaces/sudhakaryg/demo_project main

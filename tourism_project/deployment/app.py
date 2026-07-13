@@ -2,29 +2,22 @@ import streamlit as st
 import pandas as pd
 import joblib
 import os
-import urllib.request
 
 st.set_page_config(page_title="Visit with Us: Premium Package AI Analytics", layout="wide", page_icon="✈️")
 st.title("✈️ Wellness Tourism Package Purchase Predictor")
 
 @st.cache_resource
 def load_production_model():
-    # Set to parse your specific profile location metrics
-    hf_user = "sudhakaryg"
-    url = f"https://huggingface.co/{hf_user}/tourism-package-model/resolve/main/best_model.pkl"
+    # Target model artifact stored locally within the root container context
     local_path = "best_model.pkl"
-    if not os.path.exists(local_path):
-        try:
-            urllib.request.urlretrieve(url, local_path)
-        except Exception as e:
-            st.error(f"Error fetching model weights from remote repository: {e}")
-            return None
-    return joblib.load(local_path)
+    if os.path.exists(local_path):
+        return joblib.load(local_path)
+    return None
 
 model = load_production_model()
 
 if model is not None:
-    st.success("⚡ Production machine learning pipeline synchronized with Hugging Face Model Space.")
+    st.success("⚡ Production machine learning pipeline active within container space.")
     
     col1, col2, col3 = st.columns(3)
     with col1:
@@ -73,4 +66,4 @@ if model is not None:
         else:
             st.warning(f"💤 **Low Conversion Candidate. Target Probability: {probability*100:.2f}%**")
 else:
-    st.error("❌ Application Error: System could not retrieve production model weights from Hub.")
+    st.error("❌ Application Error: System could not locate local container model weights files.")
