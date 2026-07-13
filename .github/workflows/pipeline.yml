@@ -53,31 +53,24 @@ jobs:
           cp tourism_project/data/test.csv destination_space/test.csv
           cp tourism_project/model_building/best_model.pkl destination_space/best_model.pkl
           
-          # Use an automated Python script to write out the README header metadata
-          # This guarantees that formatting symbols or hidden tabs are never stripped out by the bash runner
-          python -c "
-metadata = '''---
-title: Wellness Tourism Package Predictor
-emoji: ✈️
-colorFrom: blue
-colorTo: green
-sdk: docker
-app_port: 7860
-pinned: false
----
-
-# ✈️ AI-Driven Tourism Package Prediction & MLOps Pipeline
-
-An end-to-end production-grade machine learning and MLOps lifecycle solution engineered for \"Visit with Us\" to optimize marketing campaigns.
-
-## 📊 Live System Endpoints
-* **Production Application Dashboard:** https://huggingface.co/spaces/sudhakaryg/demo_project
-* **GitHub Repository Code Context:** https://github.com/NeonCode9/GL_PGP
-'''
-with open('destination_space/README.md', 'w', encoding='utf-8') as f:
-    f.write(metadata)
-print('✔️ Space metadata header compiled safely.')
-"
+          # --- FIXED: Use safe echo commands to explicitly write the required metadata headers ---
+          # This guarantees that the YAML text parser never reads raw '---' markers inside a string block.
+          echo "---" > destination_space/README.md
+          echo "title: Wellness Tourism Package Predictor" >> destination_space/README.md
+          echo "emoji: ✈️" >> destination_space/README.md
+          echo "colorFrom: blue" >> destination_space/README.md
+          echo "colorTo: green" >> destination_space/README.md
+          echo "sdk: docker" >> destination_space/README.md
+          echo "app_port: 7860" >> destination_space/README.md
+          echo "pinned: false" >> destination_space/README.md
+          echo "---" >> destination_space/README.md
+          echo "" >> destination_space/README.md
+          echo "# ✈️ AI-Driven Tourism Package Prediction & MLOps Pipeline" >> destination_space/README.md
+          echo "An end-to-end production-grade machine learning and MLOps lifecycle solution engineered for Visit with Us." >> destination_space/README.md
+          echo "### 📊 Live System Endpoints" >> destination_space/README.md
+          echo "* **Dashboard App:** https://huggingface.co/spaces/sudhakaryg/demo_project" >> destination_space/README.md
+          echo "* **Code Repository:** https://github.com/NeonCode9/GL_PGP" >> destination_space/README.md
+          print("✔️ Space metadata configuration header compiled safely.")
           
           cd destination_space
           git add .
