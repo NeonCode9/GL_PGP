@@ -73,7 +73,7 @@ jobs:
         git config --global user.name "NeonCode9"
         
         # Explicit hardcoded token authentication layout to bypass GitHub Secrets reading bugs
-        git clone https://user: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@huggingface.co/spaces/sudhakaryg/demo_project hf_workspace
+        git clone https://user:sudhakaryg@huggingface.co/spaces/sudhakaryg/demo_project hf_workspace
         
         cp tourism_project/deployment/app.py hf_workspace/app.py
         cp tourism_project/deployment/requirements.txt hf_workspace/requirements.txt
@@ -116,4 +116,4 @@ jobs:
         print('Automation cycle completed successfully!')
         "
 
-# Self-Contained Build Trigger ID: 2026-07-15 12:02:45
+# Self-Contained Build Trigger ID: 2026-07-15 12:05:16
