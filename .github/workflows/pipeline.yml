@@ -97,7 +97,7 @@ jobs:
         cd hf_workspace
         git add .
         git diff-index --quiet HEAD || git commit -m "Automated CI/CD App structural update"
-        git push https://user:hf_zQVFZyskPxsM@huggingface.co/spaces/sudhakaryg/demo_project main
+        git push https://user:sudhakaryg@huggingface.co/spaces/sudhakaryg/demo_project main
 
     - name: Secure High-Level Binary Stream Synchronization
       run: |
@@ -116,4 +116,4 @@ jobs:
         print('Automation cycle completed successfully!')
         "
 
-# Self-Contained Build Trigger ID: 2026-07-15 12:00:01
+# Self-Contained Build Trigger ID: 2026-07-15 12:02:45
