@@ -70,11 +70,13 @@ jobs:
     - name: Push Text Assets via Git Native Authentication
       env:
         HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        HF_USER: ${{ secrets.HF_USER }}
       run: |
         git config --global user.email "sudhakar.yg@gmail.com"
         git config --global user.name "NeonCode9"
         
-        git clone https://NeonCode9:${{ secrets.HF_TOKEN }}@huggingface.co/spaces/sudhakaryg/demo_project hf_workspace
+        # Using standard token-based Git access authentication layout
+        git clone https://user:$HF_TOKEN@huggingface.co/spaces/$HF_USER/demo_project hf_workspace
         
         cp tourism_project/deployment/app.py hf_workspace/app.py
         cp tourism_project/deployment/requirements.txt hf_workspace/requirements.txt
@@ -98,22 +100,24 @@ jobs:
         cd hf_workspace
         git add .
         git diff-index --quiet HEAD || git commit -m "Automated CI/CD App structural update"
-        git push https://NeonCode9:${{ secrets.HF_TOKEN }}@huggingface.co/spaces/sudhakaryg/demo_project main
+        git push https://user:$HF_TOKEN@huggingface.co/spaces/$HF_USER/demo_project main
 
     - name: Secure High-Level Binary Stream Synchronization
       env:
         HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        HF_USER: ${{ secrets.HF_USER }}
       run: |
         python -c "
+        import os
         from huggingface_hub import HfApi
         api = HfApi()
         print('Streaming binary artifact safely...')
         api.upload_file(
             path_or_fileobj='tourism_project/model_building/best_model.pkl',
             path_in_repo='best_model.pkl',
-            repo_id='sudhakaryg/demo_project',
+            repo_id=f'{os.environ["HF_USER"]}/demo_project',
             repo_type='space',
-            token='${{ secrets.HF_TOKEN }}'
+            token=os.environ["HF_TOKEN"]
         )
         print('Automation cycle completed!')
         "
