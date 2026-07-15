@@ -75,7 +75,6 @@ jobs:
         git config --global user.email "sudhakar.yg@gmail.com"
         git config --global user.name "NeonCode9"
         
-        # Using standard token-based Git access authentication layout
         git clone https://user:$HF_TOKEN@huggingface.co/spaces/$HF_USER/demo_project hf_workspace
         
         cp tourism_project/deployment/app.py hf_workspace/app.py
@@ -112,14 +111,19 @@ jobs:
         from huggingface_hub import HfApi
         api = HfApi()
         print('Streaming binary artifact safely...')
+        
+        # Safe extraction out of environment block map
+        target_user = os.environ.get('HF_USER')
+        target_token = os.environ.get('HF_TOKEN')
+        
         api.upload_file(
             path_or_fileobj='tourism_project/model_building/best_model.pkl',
             path_in_repo='best_model.pkl',
-            repo_id=f'{os.environ["HF_USER"]}/demo_project',
+            repo_id=target_user + '/demo_project',
             repo_type='space',
-            token=os.environ["HF_TOKEN"]
+            token=target_token
         )
-        print('Automation cycle completed!')
+        print('Automation cycle completed successfully!')
         "
 
-# Force Build Run Triggered At: 2026-07-15 11:31:35
+# Trigger Execution ID: 2026-07-15 11:34:41
