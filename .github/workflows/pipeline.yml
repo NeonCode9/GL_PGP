@@ -3,74 +3,117 @@ name: Tourism Project Automation Pipeline
 on:
   push:
     branches:
-      - main  # Automatically execute on updates to the main code branch
+      - main
 
 jobs:
-  mlops-automated-lifecycle:
+  mlops-deployment:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout Code Repository
-        uses: actions/checkout@v3
+    - name: Checkout GitHub Repository Context
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
 
-      - name: Initialize Environment Python 3.9
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.9'
-          cache: 'pip'
+    - name: Set up Modern Python Environment
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
 
-      - name: Install System Architecture Requirements
-        run: |
-          pip install --upgrade pip
-          pip install -r tourism_project/deployment/requirements.txt
+    - name: Install System and Project Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pandas numpy xgboost scikit-learn==1.6.1 joblib huggingface_hub
 
-      - name: Run Automated Preprocessing Layers
-        run: |
-          python tourism_project/model_building/data_prep.py
+    - name: Execute Pipeline Engine and Local Training
+      run: |
+        python -c "
+        import os, pandas as pd, joblib
+        from sklearn.model_selection import train_test_split
+        from sklearn.compose import ColumnTransformer
+        from sklearn.preprocessing import OneHotEncoder, StandardScaler
+        from sklearn.pipeline import Pipeline
+        from xgboost import XGBClassifier
 
-      - name: Run Model Ingestion & MLflow Tracking
-        run: |
-          nohup mlflow ui --host 0.0.0.0 --port 5000 &
-          sleep 5
-          python tourism_project/model_building/train.py
+        os.makedirs('tourism_project/data', exist_ok=True)
+        os.makedirs('tourism_project/model_building', exist_ok=True)
+        os.makedirs('tourism_project/deployment', exist_ok=True)
 
-      - name: Sync Data, Weights, and App Components to Hugging Face Space Repository
-        env:
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        run: |
-          git config --global user.email "actions@github.com"
-          git config --global user.name "GitHub Actions CI/CD Engine"
-          
-          # Clone target placeholder Space location on Hugging Face
-          git clone https://huggingface.co/spaces/sudhakaryg/demo_project destination_space
-          
-          # Copy application frontend components
-          cp tourism_project/deployment/app.py destination_space/app.py
-          cp tourism_project/deployment/requirements.txt destination_space/requirements.txt
-          cp tourism_project/deployment/Dockerfile destination_space/Dockerfile
-          
-          # Copy data files and training weights
-          cp tourism_project/data/train.csv destination_space/train.csv
-          cp tourism_project/data/test.csv destination_space/test.csv
-          cp tourism_project/model_building/best_model.pkl destination_space/best_model.pkl
-          
-          # Use clean, simple echo statements to explicitly write out the required metadata headers
-          echo "---" > destination_space/README.md
-          echo "title: Wellness Tourism Package Predictor" >> destination_space/README.md
-          echo "emoji: ✈️" >> destination_space/README.md
-          echo "colorFrom: blue" >> destination_space/README.md
-          echo "colorTo: green" >> destination_space/README.md
-          echo "sdk: docker" >> destination_space/README.md
-          echo "app_port: 7860" >> destination_space/README.md
-          echo "pinned: false" >> destination_space/README.md
-          echo "---" >> destination_space/README.md
-          echo "" >> destination_space/README.md
-          echo "# ✈️ AI-Driven Tourism Package Prediction & MLOps Pipeline" >> destination_space/README.md
-          echo "An end-to-end production-grade machine learning and MLOps lifecycle solution engineered for Visit with Us." >> destination_space/README.md
-          echo "### 📊 Live System Endpoints" >> destination_space/README.md
-          echo "* **Dashboard App:** https://huggingface.co/spaces/sudhakaryg/demo_project" >> destination_space/README.md
-          echo "* **Code Repository:** https://github.com/NeonCode9/GL_PGP" >> destination_space/README.md
-          
-          cd destination_space
-          git add .
-          git commit -m "Production Update: Overwrite app, assets, and metadata header. Run: ${{ github.run_number }}" || echo "No pipeline variances detected."
-          git push https://sudhakaryg:${{ secrets.HF_TOKEN }}@huggingface.co/spaces/sudhakaryg/demo_project main
+        print('Ingesting datasets...')
+        df = pd.read_csv('https://raw.githubusercontent.com/NeonCode9/GL_PGP/main/tourism_project/data/tourism.csv')
+        if 'Unnamed: 0' in df.columns: df = df.drop(columns=['Unnamed: 0'])
+        if 'CustomerID' in df.columns: df = df.drop(columns=['CustomerID'])
+        for col in df.select_dtypes(include=['object']).columns: df[col] = df[col].astype(str).str.strip()
+        if 'Gender' in df.columns: df['Gender'] = df['Gender'].replace('Fe Male', 'Female')
+
+        num_cols = ['Age', 'DurationOfPitch', 'NumberOfTrips', 'NumberOfChildrenVisiting', 'NumberOfFollowups', 'MonthlyIncome']
+        for col in num_cols: df[col].fillna(df[col].median(), inplace=True)
+        for col in ['TypeofContact', 'PreferredPropertyStar']: df[col].fillna(df[col].mode()[0], inplace=True)
+
+        X = df.drop(columns=['ProdTaken'])
+        y = df['ProdTaken']
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.20, random_state=42, stratify=y)
+        
+        pd.concat([X_train, y_train], axis=1).to_csv('tourism_project/data/train.csv', index=False)
+        pd.concat([X_test, y_test], axis=1).to_csv('tourism_project/data/test.csv', index=False)
+
+        preprocessor = ColumnTransformer(transformers=[
+            ('scaler', StandardScaler(), X_train.select_dtypes(include=['int64', 'float64']).columns.tolist()),
+            ('encoder', OneHotEncoder(handle_unknown='ignore', sparse_output=False), X_train.select_dtypes(include=['object']).columns.tolist())
+        ])
+        pipeline = Pipeline([('preprocessor', preprocessor), ('classifier', XGBClassifier(n_estimators=200, max_depth=7, learning_rate=0.08, subsample=0.85, random_state=42, eval_metric='logloss'))])
+        pipeline.fit(X_train, y_train)
+        joblib.dump(pipeline, 'tourism_project/model_building/best_model.pkl')
+        print('Local pipelines ready!')
+        "
+
+    - name: Push Text Assets via Git Native Authentication
+      env:
+        HF_TOKEN: ${{ secrets.HF_TOKEN }}
+      run: |
+        git config --global user.email "sudhakar.yg@gmail.com"
+        git config --global user.name "NeonCode9"
+        
+        git clone https://NeonCode9:${{ secrets.HF_TOKEN }}@huggingface.co/spaces/sudhakaryg/demo_project hf_workspace
+        
+        cp tourism_project/deployment/app.py hf_workspace/app.py
+        cp tourism_project/deployment/requirements.txt hf_workspace/requirements.txt
+        cp tourism_project/deployment/Dockerfile hf_workspace/Dockerfile
+        cp tourism_project/data/train.csv hf_workspace/train.csv
+        cp tourism_project/data/test.csv hf_workspace/test.csv
+        
+        cat << 'EOF' > hf_workspace/README.md
+        ---
+        title: Wellness Tourism Package Predictor
+        emoji: ✈️
+        colorFrom: blue
+        colorTo: green
+        sdk: docker
+        app_port: 7860
+        pinned: false
+        ---
+        # ✈️ AI-Driven Tourism Package Prediction Pipeline
+        EOF
+
+        cd hf_workspace
+        git add .
+        git diff-index --quiet HEAD || git commit -m "Automated CI/CD App structural update"
+        git push https://NeonCode9:${{ secrets.HF_TOKEN }}@huggingface.co/spaces/sudhakaryg/demo_project main
+
+    - name: Secure High-Level Binary Stream Synchronization
+      env:
+        HF_TOKEN: ${{ secrets.HF_TOKEN }}
+      run: |
+        python -c "
+        from huggingface_hub import HfApi
+        api = HfApi()
+        print('Streaming binary artifact safely...')
+        api.upload_file(
+            path_or_fileobj='tourism_project/model_building/best_model.pkl',
+            path_in_repo='best_model.pkl',
+            repo_id='sudhakaryg/demo_project',
+            repo_type='space',
+            token='${{ secrets.HF_TOKEN }}'
+        )
+        print('Automation cycle completed!')
+        "
